@@ -86,9 +86,9 @@ class QuickInputService {
     final String? noteFinal = note.isEmpty ? null : note;
 
     String? category;
-    if (note != null && note.isNotEmpty) {
+    if (noteFinal != null && noteFinal.isNotEmpty) {
       // Simple category heuristics
-      final n = note.toLowerCase();
+      final n = noteFinal!.toLowerCase();
       if (n.contains('ăn') ||
           n.contains('sáng') ||
           n.contains('trưa') ||

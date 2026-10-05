@@ -12,7 +12,6 @@ import '../models/recurring_income.dart';
 import '../repositories/transaction_repository.dart';
 import '../repositories/event_repository.dart';
 import '../repositories/goal_repository.dart';
-import '../repositories/budget_repository.dart';
 import '../repositories/recurring_bill_repository.dart';
 
 class BackupService {
@@ -21,19 +20,16 @@ class BackupService {
   final TransactionRepository _txRepo;
   final EventRepository _eventRepo;
   final GoalRepository _goalRepo;
-  final BudgetRepository _budgetRepo;
   final RecurringBillRepository _billRepo;
 
   BackupService({
     TransactionRepository? txRepo,
     EventRepository? eventRepo,
     GoalRepository? goalRepo,
-    BudgetRepository? budgetRepo,
     RecurringBillRepository? billRepo,
   }) : _txRepo = txRepo ?? TransactionRepository(),
        _eventRepo = eventRepo ?? EventRepository(),
        _goalRepo = goalRepo ?? GoalRepository(),
-       _budgetRepo = budgetRepo ?? BudgetRepository(),
        _billRepo = billRepo ?? RecurringBillRepository();
 
   Future<Map<String, dynamic>> exportAll() async {

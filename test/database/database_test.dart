@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
-import 'package:sqflite/sqflite.dart' hide Transaction;
 import 'package:lifesync/models/transaction.dart';
 import 'package:lifesync/models/event.dart';
 import 'package:lifesync/models/savings_goal.dart';
