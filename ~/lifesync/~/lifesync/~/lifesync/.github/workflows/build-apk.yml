@@ -1,0 +1,74 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.5"
+          channel: stable
+          cache: true
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Patch Android build files
+        run: |
+          # Force Gradle wrapper version
+          cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOP'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-all.zip
+          EOP
+          # Strip leading spaces that heredoc may add
+          sed -i 's/^[[:space:]]*//' android/gradle/wrapper/gradle-wrapper.properties
+
+          # Force AGP opt-out (Flutter may rewrite this during build)
+          cat > android/gradle.properties << 'EOP'
+          org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G -XX:+HeapDumpOnOutOfMemoryError
+          android.useAndroidX=true
+          android.newDsl=false
+          android.builtInKotlin=false
+          EOP
+          sed -i 's/^[[:space:]]*//' android/gradle.properties
+
+          echo "--- wrapper ---"
+          cat android/gradle/wrapper/gradle-wrapper.properties
+          echo "--- properties ---"
+          cat android/gradle.properties
+
+      - run: flutter --version
+      - run: flutter pub get
+      - run: dart format --set-exit-if-changed lib test
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test
+
+      - name: Re-patch before APK build
+        run: |
+          sed -i 's|gradle-[0-9.]*-all.zip|gradle-8.14.3-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
+          grep -q 'android.newDsl=false' android/gradle.properties || echo 'android.newDsl=false' >> android/gradle.properties
+          grep -q 'android.builtInKotlin=false' android/gradle.properties || echo 'android.builtInKotlin=false' >> android/gradle.properties
+          cat android/gradle/wrapper/gradle-wrapper.properties
+          cat android/gradle.properties
+
+      - run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lifesync-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
